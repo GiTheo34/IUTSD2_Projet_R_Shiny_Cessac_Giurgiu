@@ -9,25 +9,30 @@
 
 library(shiny)
 
-# Define UI for application that draws a histogram
-fluidPage(
-
-    # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
-        ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-            plotOutput("distPlot")
-        )
+ui <- fluidPage(
+  titlePanel("Carte interactive des DPE dans l'Hérault"),
+  
+  tabsetPanel(
+    id = "tabs",  # Identifiant des onglets pour naviguer facilement entre eux
+    tabPanel("Carte",
+             sidebarLayout(
+               sidebarPanel(
+                 textInput("code_postal", "Entrez un code postal :", ""),
+                 actionButton("rechercher", "Rechercher"),
+                 selectInput("ville", "Choisissez une ville :", choices = NULL),
+                 actionButton("voir_rapport", "Voir le rapport sur la ville")
+               ),
+               
+               mainPanel(
+                 leafletOutput("carte")
+               )
+             )
+    ),
+    tabPanel("Rapport sur la ville", 
+             h3(textOutput("nom_ville")),
+             verbatimTextOutput("rapport_ville")
     )
+  )
 )
+
+

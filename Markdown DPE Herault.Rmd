@@ -2,28 +2,34 @@
 title: "Markdown DPE Herault"
 output: word_document
 date: "2024-09-20"
+params:
+  code_postal: NULL
+  ville: NULL
+  data: NULL
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+# Afficher un tableau des informations
+params$data %>%
+  kable()
 ```
 
-## Including Plots
+```{r}
+leaflet(params$data) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    lng = ~lon,
+    lat = ~lat,
+    popup = ~paste("Code Postal:", `Code_postal_(BAN)`, "<br>",
+                   "Etiquette DPE:", Etiquette_DPE),
+    radius = 6,
+    color = "blue",
+    fillOpacity = 0.7
+  )
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
