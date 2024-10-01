@@ -13,7 +13,7 @@ ui <- fluidPage(
   titlePanel("Carte interactive des DPE dans l'Hérault"),
   
   tabsetPanel(
-    id = "tabs",  # Identifiant des onglets pour naviguer facilement entre eux
+    id = "tabs",
     tabPanel("Carte",
              sidebarLayout(
                sidebarPanel(
@@ -30,9 +30,14 @@ ui <- fluidPage(
     ),
     tabPanel("Rapport sur la ville", 
              h3(textOutput("nom_ville")),
-             verbatimTextOutput("rapport_ville")
+             fluidRow(
+               column(6, htmlOutput("rapport_ville")),   # Informations sur la ville
+               column(6, imageOutput("image_ville"))    # Image de la ville
+             ),
+             h4("Répartition des étiquettes DPE"),
+             plotOutput("graphique_dpe"),               # Graphique des étiquettes DPE
+             h4("Classement de la ville"),
+             htmlOutput("classement_ville")             # Classement par étiquette A
     )
   )
 )
-
-
