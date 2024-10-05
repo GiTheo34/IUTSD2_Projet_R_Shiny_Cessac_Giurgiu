@@ -1,22 +1,22 @@
-library(shiny)
 install.packages(c("httr", "jsonlite"))
-library(httr)
-library(jsonlite)
 install.packages("bslib")
-library(bslib)
 install.packages("mapsapi")
 install.packages("remotes")
 remotes::install_github("michaeldorman/mapsapi")
+install.packages("shiny")
+install.packages("leaflet")
+install.packages("opencage")
+install.packages("kableExtra")
+library(shiny)
+library(httr)
+library(jsonlite)
+library(bslib)
 library(mapsapi)
 library(leaflet)
 library(dplyr)
 library(ggplot2)
-install.packages("shiny")
-install.packages("leaflet")
 library(leaflet)
-install.packages("opencage")
 library(opencage)
-install.packages("kableExtra")
 library(kableExtra)
 
 herault = read.csv(file = "C:/Users/Théo/OneDrive/Bureau/BUT/2ème année/R shiny/Projet-R-Herault/adresses-34.csv", header = TRUE, sep = ";")
@@ -29,7 +29,7 @@ for (i in cp_herault) {
   params <- list(
     page = 1,
     size = 10000,
-    select = "Identifiant__BAN,Code_postal_(BAN),N°DPE,Etiquette_DPE,Date_réception_DPE",
+    select = "Identifiant__BAN,Code_postal_(BAN),N°DPE,Etiquette_DPE,Date_réception_DPE,Année_construction,Surface_habitable_logement,Type_bâtiment",
     q = i,
     q_fields = "Code_postal_(BAN)"
   ) 
@@ -51,6 +51,7 @@ df$id = df$Identifiant__BAN
 
 df <- merge(df, herault[, c("id", "lon", "lat", "numero", "rep", "nom_voie", "nom_commune")], by = "id", all.x = TRUE)
 
-df = df[,-2]
+data_dpe = df[,-2]
+
 
 write.table(df, file = "DPE_Herault.csv", col.names = TRUE, row.names = FALSE, sep = ";", dec = ".")

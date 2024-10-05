@@ -20,6 +20,8 @@ server <- function(input, output, session) {
       F = "www/img/DPE F.png",
       G = "www/img/DPE G.png"
     )
+    
+    # Retourner l'URL de l'icône correspondante à l'étiquette
     return(icons[etiquette])
   }
   
@@ -28,7 +30,7 @@ server <- function(input, output, session) {
     req(input$code_postal, input$ville)
     
     # Filtrer les données en fonction du code postal et de la ville
-    filtered_data <- df %>%
+    filtered_data <- data_dpe %>%
       filter(`Code_postal_(BAN)` == input$code_postal,
              nom_commune == input$ville)
     
@@ -40,10 +42,12 @@ server <- function(input, output, session) {
           addMarkers(
             lng = ~lon,
             lat = ~lat,
-            icon = ~generate_icon(Etiquette_DPE),  # Utilisation des icônes
-            popup = ~paste("Code Postal:", `Code_postal_(BAN)`, "<br>",
-                           "Ville:", nom_commune, "<br>",
-                           "<img src='", icons(Etiquette_DPE),">")
+            icon = ~makeIcon(iconUrl = generate_icon(Etiquette_DPE)),  # Utilisation des icônes pour les marqueurs
+            popup = ~paste(
+              "Code Postal:", `Code_postal_(BAN)`, "<br>",
+              "Ville:", nom_commune, "<br>",
+              "Etiquette DPE:", Etiquette_DPE, "<br>"
+            )  # Ajouter l'image dans le popup
           )
       })
     } else {
@@ -61,7 +65,7 @@ server <- function(input, output, session) {
   observeEvent(input$rechercher, {
     req(input$code_postal)
     
-    communes <- df %>%
+    communes <- data_dpe %>%
       filter(`Code_postal_(BAN)` == input$code_postal) %>%
       select(nom_commune) %>%
       distinct() %>%
@@ -75,7 +79,7 @@ server <- function(input, output, session) {
     
     updateTabsetPanel(session, "tabs", selected = "Rapport sur la ville")
     
-    filtered_data <- df %>%
+    filtered_data <- data_dpe %>%
       filter(nom_commune == input$ville)
     
     nombre_dpe <- nrow(filtered_data)
@@ -151,7 +155,7 @@ server <- function(input, output, session) {
     }, deleteFile = TRUE)  # Supprimer l'image temporaire après affichage
     
     # Classement de la ville en fonction du pourcentage de DPE A
-    df_classement <- df %>%
+    df_classement <- data_dpe %>%
       group_by(nom_commune) %>%
       summarise(pourcentage_A = mean(Etiquette_DPE == "A") * 100) %>%
       arrange(desc(pourcentage_A))
@@ -181,4 +185,3 @@ server <- function(input, output, session) {
       setView(lng = 3.8772, lat = 43.6119, zoom = 9) # Vue centrée sur l'Hérault
   })
 }
-
