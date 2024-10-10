@@ -9,6 +9,38 @@
 
 server <- function(input, output, session) {
   
+  # Variable pour contrôler l'état de connexion
+  user_authenticated <- reactiveVal(FALSE)
+  
+  # Page de connexion
+  output$login_ui <- renderUI({
+    if (!user_authenticated()) {
+      fluidRow(
+        column(4, 
+               textInput("login_user", "Nom d'utilisateur"),
+               passwordInput("login_pass", "Mot de passe"),
+               actionButton("login_btn", "Se connecter")
+        )
+      )
+    }
+  })
+  
+  # Application principale
+  output$app_ui <- renderUI({
+    if (user_authenticated()) {
+      app_ui()
+    }
+  })
+  
+  # Authentification
+  observeEvent(input$login_btn, {
+    if (input$login_user == username && input$login_pass == password) {
+      user_authenticated(TRUE)
+    } else {
+      showNotification("Identifiants incorrects", type = "error")
+    }
+  })
+  
   # Fonction pour générer une icône en fonction de l'étiquette DPE
   generate_icon <- function(etiquette) {
     icons <- list(
@@ -21,7 +53,6 @@ server <- function(input, output, session) {
       G = "www/img/DPE G.png"
     )
     
-    # Retourner l'URL de l'icône correspondante à l'étiquette
     return(icons[etiquette])
   }
   
@@ -42,16 +73,15 @@ server <- function(input, output, session) {
           addMarkers(
             lng = ~lon,
             lat = ~lat,
-            icon = ~makeIcon(iconUrl = generate_icon(Etiquette_DPE)),  # Utilisation des icônes pour les marqueurs
             popup = ~paste(
               "Code Postal:", `Code_postal_(BAN)`, "<br>",
               "Ville:", nom_commune, "<br>",
-              "Etiquette DPE:", Etiquette_DPE, "<br>"
-            )  # Ajouter l'image dans le popup
+              "Etiquette DPE:", Etiquette_DPE, "<br>",
+              "<img src='", makeIcon(iconUrl = generate_icon(Etiquette_DPE)), "' width='50' height='50'>"
+            )
           )
       })
     } else {
-      # Si aucun résultat, réinitialiser la carte
       output$carte <- renderLeaflet({
         leaflet() %>%
           addTiles() %>%
@@ -87,6 +117,25 @@ server <- function(input, output, session) {
                                                 levels = c("A", "B", "C", "D", "E", "F", "G")))), 2)
     coordonnees <- paste("Latitude:", mean(filtered_data$lat), "Longitude:", mean(filtered_data$lon))
     
+    surface_moyenne <- round(mean(filtered_data$Surface_habitable_logement, na.rm = TRUE), 2)
+    surface_min <- round(min(filtered_data$Surface_habitable_logement, na.rm = TRUE), 2)
+    surface_max <- round(max(filtered_data$Surface_habitable_logement, na.rm = TRUE), 2)
+    
+    nb_neuf <- sum(filtered_data$Ancien_Neuf == "Neuf", na.rm = TRUE)
+    nb_ancien <- sum(filtered_data$Ancien_Neuf == "Ancien", na.rm = TRUE)
+    
+    filtered_data <- filtered_data %>%
+      mutate(Decennie_construction = floor(Année_construction / 10) * 10)
+    
+    repartition_dpe_decennie <- filtered_data %>%
+      group_by(Decennie_construction, Etiquette_DPE) %>%
+      summarise(Nombre_logements = n()) %>%
+      pivot_wider(names_from = Etiquette_DPE, values_from = Nombre_logements, values_fill = 0) %>%
+      arrange(Decennie_construction) %>%
+      select(Decennie_construction, A, B, C, D, E, F, G)
+    
+    repartition_table_html <- knitr::kable(repartition_dpe_decennie, format = "html", table.attr = "class='table table-bordered'")
+    
     rapport_html <- paste0(
       "<div style='padding: 20px;'>",
       "<h4>Informations principales pour la ville de ", input$ville, "</h4>",
@@ -94,19 +143,31 @@ server <- function(input, output, session) {
       "<li><strong>Nombre total de DPE enregistrés :</strong> ", nombre_dpe, "</li>",
       "<li><strong>Moyenne de l'étiquette DPE :</strong> ", moyenne_dpe, "</li>",
       "<li><strong>Coordonnées moyennes :</strong> ", coordonnees, "</li>",
+      "<li><strong>Surface habitable moyenne :</strong> ", surface_moyenne, " m²</li>",
+      "<li><strong>Surface habitable minimum :</strong> ", surface_min, " m²</li>",
+      "<li><strong>Surface habitable maximum :</strong> ", surface_max, " m²</li>",
+      "<li><strong>Nombre de logements neufs :</strong> ", nb_neuf, "</li>",
+      "<li><strong>Nombre de logements anciens :</strong> ", nb_ancien, "</li>",
       "</ul>",
+      "<h4>Répartition des DPE par décennie de construction</h4>",
+      repartition_table_html,
       "</div>"
     )
     
     output$rapport_ville <- renderUI({
-      HTML(rapport_html)
+      tagList(
+        HTML(rapport_html),
+        plotOutput("graphique_type_batiment"),
+        plotOutput("graphique_dpe_neuf"),   
+        plotOutput("graphique_dpe_ancien"),
+        downloadButton("telecharger_graphique_dpe", label = "Télécharger le graphique de répartition des DPE")  # Un seul bouton de téléchargement pour le graphique
+      )
     })
     
     output$nom_ville <- renderText({
       paste("Rapport sur la ville de", input$ville)
     })
     
-    # Répartition des étiquettes DPE avec ggplot2
     output$graphique_dpe <- renderPlot({
       ggplot(filtered_data, aes(x = Etiquette_DPE)) +
         geom_bar(fill = "steelblue") +
@@ -115,16 +176,42 @@ server <- function(input, output, session) {
         theme_minimal()
     })
     
-    # Image dynamique de la ville via Wikimedia API
-    output$image_ville <- renderImage({
+    output$graphique_type_batiment <- renderPlot({
+      ggplot(filtered_data, aes(x = "", fill = Type_bâtiment)) +
+        geom_bar(width = 1) +
+        coord_polar(theta = "y") +
+        labs(title = "Répartition des types de bâtiments", fill = "Type de bâtiment") +
+        theme_void()
+    })
+    
+    output$graphique_dpe_neuf <- renderPlot({
+      data_neuf <- filtered_data %>%
+        filter(Ancien_Neuf == "Neuf")
       
-      # Appel à l'API Wikimedia pour récupérer une image
+      ggplot(data_neuf, aes(x = Etiquette_DPE)) +
+        geom_bar(fill = "green") +
+        labs(title = paste("Répartition des étiquettes DPE pour les logements neufs à", input$ville),
+             x = "Étiquette DPE", y = "Nombre de logements") +
+        theme_minimal()
+    })
+    
+    output$graphique_dpe_ancien <- renderPlot({
+      data_ancien <- filtered_data %>%
+        filter(Ancien_Neuf == "Ancien")
+      
+      ggplot(data_ancien, aes(x = Etiquette_DPE)) +
+        geom_bar(fill = "blue") +
+        labs(title = paste("Répartition des étiquettes DPE pour les logements anciens à", input$ville),
+             x = "Étiquette DPE", y = "Nombre de logements") +
+        theme_minimal()
+    })
+    
+    output$image_ville <- renderImage({
       ville <- input$ville
       query <- paste0("https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original&titles=", URLencode(ville))
       res <- GET(query)
       data <- fromJSON(content(res, "text"))
       
-      # Extraire l'URL de l'image, si trouvée
       page <- data$query$pages
       image_url <- NULL
       for (p in page) {
@@ -134,7 +221,6 @@ server <- function(input, output, session) {
         }
       }
       
-      # Si une image est trouvée
       if (!is.null(image_url)) {
         temp_image <- tempfile(fileext = ".jpg")
         download.file(image_url, temp_image, mode = "wb")
@@ -152,9 +238,52 @@ server <- function(input, output, session) {
         )
       }
       
-    }, deleteFile = TRUE)  # Supprimer l'image temporaire après affichage
+    }, deleteFile = TRUE)
     
-    # Classement de la ville en fonction du pourcentage de DPE A
+    output$telecharger_image_ville <- downloadHandler(
+      filename = function() {
+        paste("image_ville_", input$ville, ".png", sep = "")
+      },
+      content = function(file) {
+        ville <- input$ville
+        query <- paste0("https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original&titles=", URLencode(ville))
+        res <- GET(query)
+        data <- fromJSON(content(res, "text"))
+        
+        page <- data$query$pages
+        image_url <- NULL
+        for (p in page) {
+          if (!is.null(p$original)) {
+            image_url <- p$original$source
+            break
+          }
+        }
+        
+        if (!is.null(image_url)) {
+          download.file(image_url, file, mode = "wb")
+        }
+      }
+    )
+    
+    # Graphique pour le téléchargement
+    output$telecharger_graphique_dpe <- downloadHandler(
+      filename = function() {
+        paste("graphique_repartition_dpe_", input$ville, ".png", sep = "")
+      },
+      content = function(file) {
+        # Sauvegarder le graphique en tant qu'image
+        png(file)
+        print(
+          ggplot(filtered_data, aes(x = Etiquette_DPE)) +
+            geom_bar(fill = "steelblue") +
+            labs(title = paste("Répartition des étiquettes DPE pour", input$ville),
+                 x = "Étiquette DPE", y = "Nombre de logements") +
+            theme_minimal()
+        )
+        dev.off()
+      }
+    )
+    
     df_classement <- data_dpe %>%
       group_by(nom_commune) %>%
       summarise(pourcentage_A = mean(Etiquette_DPE == "A") * 100) %>%
@@ -178,6 +307,46 @@ server <- function(input, output, session) {
     })
   })
   
+  # Fonction pour télécharger les données de la ville au format CSV
+  output$telecharger_csv <- downloadHandler(
+    filename = function() {
+      paste("data_", input$ville, ".csv", sep = "")
+    },
+    content = function(file) {
+      filtered_data <- data_dpe %>%
+        filter(nom_commune == input$ville)
+      write.csv(filtered_data, file, row.names = FALSE)
+    }
+  )
+  
+  observeEvent(input$generate_corr_plot, {
+    req(input$var1, input$var2)  # S'assurer que les variables sont choisies
+    
+    output$corr_plot <- renderPlot({
+      ggplot(data_dpe, aes_string(x = input$var1, y = input$var2)) +
+        geom_point(color = "steelblue") +
+        geom_smooth(method = "lm", color = "red") +
+        labs(title = paste("Corrélation entre", input$var1, "et", input$var2),
+             x = input$var1, y = input$var2) +
+        theme_minimal()
+    })
+  })
+  
+  output$download_corr_plot <- downloadHandler(
+    filename = function() {
+      paste("correlation_plot", Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      g <- ggplot(data_dpe, aes_string(x = input$var1, y = input$var2)) +
+        geom_point(color = "steelblue") +
+        geom_smooth(method = "lm", color = "red") +
+        labs(title = paste("Corrélation entre", input$var1, "et", input$var2),
+             x = input$var1, y = input$var2) +
+        theme_minimal()
+      ggsave(file, plot = g, device = "png")
+    }
+  )
+  
   # Initialiser la carte vide
   output$carte <- renderLeaflet({
     leaflet() %>%
@@ -185,3 +354,6 @@ server <- function(input, output, session) {
       setView(lng = 3.8772, lat = 43.6119, zoom = 9) # Vue centrée sur l'Hérault
   })
 }
+
+
+

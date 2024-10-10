@@ -7,6 +7,8 @@ install.packages("shiny")
 install.packages("leaflet")
 install.packages("opencage")
 install.packages("kableExtra")
+install.packages("tidyr")
+install.packages("knitr")
 library(shiny)
 library(httr)
 library(jsonlite)
@@ -18,6 +20,12 @@ library(ggplot2)
 library(leaflet)
 library(opencage)
 library(kableExtra)
+library(tidyr)
+library(knitr)
+
+# Remplacez ceci par vos identifiants de connexion réels
+username <- "admin"
+password <- "admin"
 
 herault = read.csv(file = "C:/Users/Théo/OneDrive/Bureau/BUT/2ème année/R shiny/Projet-R-Herault/adresses-34.csv", header = TRUE, sep = ";")
 cp_herault = unique(herault$code_postal)
@@ -53,5 +61,13 @@ df <- merge(df, herault[, c("id", "lon", "lat", "numero", "rep", "nom_voie", "no
 
 data_dpe = df[,-2]
 
+# Convertir l'année actuelle en numérique pour effectuer des calculs
+annee_actuelle <- as.numeric(format(Sys.Date(), "%Y"))
+
+# Ajouter la colonne Ancien_Neuf
+data_dpe <- data_dpe %>%
+  mutate(
+    Ancien_Neuf = ifelse(Année_construction >= (annee_actuelle - 10), "Neuf", "Ancien")
+  )
 
 write.table(df, file = "DPE_Herault.csv", col.names = TRUE, row.names = FALSE, sep = ";", dec = ".")

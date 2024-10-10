@@ -1,0 +1,93 @@
+/* styles.css */
+
+/* Style par défaut (thème normal) */
+body {
+    background-color: #FFFFFF; /* Fond clair */
+    color: #000000; /* Texte sombre */
+}
+
+/* Thème sombre */
+body.dark-theme {
+    background-color: #121212; /* Fond sombre */
+    color: #E0E0E0; /* Texte clair */
+}
+
+/* Boutons */
+.btn {
+    background-color: #F0F0F0; /* Couleur de fond des boutons */
+    border: none;
+    color: #000000; /* Couleur du texte des boutons */
+}
+
+.btn:hover {
+    background-color: #D0D0D0; /* Couleur de fond au survol */
+}
+
+body.dark-theme .btn {
+    background-color: #1E1E1E; /* Couleur de fond des boutons en thème sombre */
+    color: #E0E0E0; /* Couleur du texte des boutons en thème sombre */
+}
+
+body.dark-theme .btn:hover {
+    background-color: #3A3A3A; /* Couleur de fond au survol en thème sombre */
+}
+
+/* En-têtes */
+h1, h2, h3, h4 {
+    color: #000000; /* Couleur des en-têtes en thème normal */
+}
+
+body.dark-theme h1, body.dark-theme h2, body.dark-theme h3, body.dark-theme h4 {
+    color: #E0E0E0; /* Couleur des en-têtes en thème sombre */
+}
+
+/* Tableaux */
+.table {
+    background-color: #FFFFFF; /* Fond des tableaux en thème normal */
+    color: #000000; /* Couleur du texte des tableaux en thème normal */
+}
+
+body.dark-theme .table {
+    background-color: #1E1E1E; /* Fond des tableaux en thème sombre */
+    color: #E0E0E0; /* Couleur du texte des tableaux en thème sombre */
+}
+
+.table th {
+    background-color: #F0F0F0; /* Fond des en-têtes des tableaux en thème normal */
+    color: #000000; /* Couleur du texte des en-têtes des tableaux en thème normal */
+}
+
+body.dark-theme .table th {
+    background-color: #2A2A2A; /* Fond des en-têtes des tableaux en thème sombre */
+    color: #E0E0E0; /* Couleur du texte des en-têtes des tableaux en thème sombre */
+}
+
+/* Graphiques */
+.shiny-plot-output {
+    background-color: #FFFFFF; /* Fond des graphiques en thème normal */
+}
+
+body.dark-theme .shiny-plot-output {
+    background-color: #1E1E1E; /* Fond des graphiques en thème sombre */
+}
+
+/* Inputs */
+input, select, textarea {
+    background-color: #FFFFFF; /* Fond des champs de saisie en thème normal */
+    color: #000000; /* Couleur du texte des champs de saisie en thème normal */
+    border: 1px solid #CCCCCC; /* Bordure des champs de saisie en thème normal */
+}
+
+body.dark-theme input, body.dark-theme select, body.dark-theme textarea {
+    background-color: #1E1E1E; /* Fond des champs de saisie en thème sombre */
+    color: #E0E0E0; /* Couleur du texte des champs de saisie en thème sombre */
+    border: 1px solid #3A3A3A; /* Bordure des champs de saisie en thème sombre */
+}
+
+input::placeholder {
+    color: #B0B0B0; /* Couleur du texte des placeholders en thème normal */
+}
+
+body.dark-theme input::placeholder {
+    color: #B0B0B0; /* Couleur du texte des placeholders en thème sombre */
+}
