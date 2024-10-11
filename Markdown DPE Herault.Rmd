@@ -1,35 +1,42 @@
 ---
-title: "Markdown DPE Herault"
-output: word_document
-date: "2024-09-20"
-params:
-  code_postal: NULL
-  ville: NULL
-  data: NULL
+title: "Rapport de la Ville"
+author: "Théo & Adrian"
+date: "`r Sys.Date()`"
+output: pdf_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+# Introduction
+
+Ce rapport présente une analyse des données pour la ville sélectionnée. Il inclut des visualisations et des statistiques pertinentes.
+
+# Informations Générales
+
+**Nombre de logements neufs :** `r input$nombre_neuf`  
+**Nombre de logements anciens :** `r input$nombre_ancien`  
+
+---
+
+# Répartition des Étiquettes DPE
+
+```{r, echo=FALSE, fig.cap="Répartition des étiquettes DPE pour les logements neufs"}
+plot1
+plot2
+plot3
 ```
 
-```{r}
-# Afficher un tableau des informations
-params$data %>%
-  kable()
+
+```{r, echo=FALSE, fig.cap="Répartition des étiquettes DPE pour les logements neufs"}
+kable(data_dpe)
 ```
 
-```{r}
-leaflet(params$data) %>%
-  addTiles() %>%
-  addCircleMarkers(
-    lng = ~lon,
-    lat = ~lat,
-    popup = ~paste("Code Postal:", `Code_postal_(BAN)`, "<br>",
-                   "Etiquette DPE:", Etiquette_DPE),
-    radius = 6,
-    color = "blue",
-    fillOpacity = 0.7
-  )
 
-```
-
+```{r, echo=FALSE, fig.cap="Répartition des étiquettes DPE pour les logements neufs"}
+```r
+output$generate_report <- downloadHandler(
+    filename = function() {
+        paste("rapport_", Sys.Date(), ".pdf", sep = "")
+    },
+    content = function(file) {
+        rmarkdown::render("rapport.Rmd", output_file = file, envir = environment())
+    }
+)
