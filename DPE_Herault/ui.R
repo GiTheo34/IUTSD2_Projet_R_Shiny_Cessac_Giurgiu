@@ -59,7 +59,12 @@ app_ui <- fluidPage(
                  actionButton("rechercher", "Rechercher"),
                  selectInput("ville", "Choisissez une ville :", choices = NULL),
                  actionButton("voir_rapport", "Voir le rapport sur la ville"),
-                 downloadButton("telecharger_csv", label = "Télécharger datas de la ville")
+                 downloadButton("telecharger_csv", label = "Télécharger datas de la ville"),
+                 # Ajout du bouton pour mettre à jour les données
+                 actionButton("update_data_btn", "Mettre à jour les données DPE"),
+                 
+                 # Ajout d'un indicateur de chargement
+                 verbatimTextOutput("update_status")
                ),
                
                mainPanel(
@@ -71,13 +76,14 @@ app_ui <- fluidPage(
              h3(textOutput("nom_ville")),
              fluidRow(
                column(6, htmlOutput("rapport_ville")),   # Informations sur la ville
-               column(6, imageOutput("image_ville"))    # Image de la ville
+               column(6, imageOutput("image_ville")),    # Image de la ville
+               downloadButton("telecharger_image_ville", label = "Télécharger l'image de la ville")
              ),
-             downloadButton("telecharger_image_ville", label = "Télécharger l'image de la ville"),
              h4("Répartition des étiquettes DPE"),
              plotOutput("graphique_dpe"),               # Graphique des étiquettes DPE
              h4("Classement de la ville"),
-             htmlOutput("classement_ville")             # Classement par étiquette A
+             htmlOutput("classement_ville"),             # Classement par étiquette A
+             downloadButton("download_report", "Télécharger le rapport PDF"),
     ),
     tabPanel("Corrélation",
              selectInput("var1", "Choisir la première variable :", 

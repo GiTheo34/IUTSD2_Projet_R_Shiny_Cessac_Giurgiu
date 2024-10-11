@@ -1,74 +1,145 @@
-/* styles.css */
-
 /* Style par défaut (thème normal) */
 body {
     background-color: #FFFFFF; /* Fond clair */
     color: #000000; /* Texte sombre */
+    margin: 20px; /* Ajout d'un margin autour du corps de la page */
+    line-height: 1.6; /* Espacement entre les lignes pour améliorer la lisibilité */
 }
 
 /* Thème sombre */
 body.dark-theme {
-    background-color: #121212; /* Fond sombre */
+    background-color: #2C2C2C; /* Fond gris foncé */
     color: #E0E0E0; /* Texte clair */
 }
 
 /* Boutons */
 .btn {
-    background-color: #F0F0F0; /* Couleur de fond des boutons */
+    background-color: #4CAF50; /* Couleur de fond verte pour les boutons */
     border: none;
-    color: #000000; /* Couleur du texte des boutons */
+    color: white; /* Texte en blanc */
+    padding: 8px 16px; /* Réduction de l'espacement interne */
+    margin: 10px 0; /* Espacement externe */
+    border-radius: 20px; /* Bords arrondis modernes */
+    cursor: pointer; /* Curseur pointeur */
+    font-size: 14px; /* Réduction de la taille de police */
+    font-weight: bold; /* Texte en gras */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Transition pour les effets de survol */
 }
 
 .btn:hover {
-    background-color: #D0D0D0; /* Couleur de fond au survol */
+    background-color: #45a049; /* Couleur plus foncée au survol */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Ombre douce au survol */
 }
 
 body.dark-theme .btn {
-    background-color: #1E1E1E; /* Couleur de fond des boutons en thème sombre */
-    color: #E0E0E0; /* Couleur du texte des boutons en thème sombre */
+    background-color: #ff9800; /* Couleur orange pour le thème sombre */
+    color: white; /* Texte blanc */
 }
 
 body.dark-theme .btn:hover {
-    background-color: #3A3A3A; /* Couleur de fond au survol en thème sombre */
+    background-color: #e68a00; /* Couleur plus foncée au survol en thème sombre */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.4); /* Ombre plus prononcée pour le survol en thème sombre */
 }
 
 /* En-têtes */
+h1 {
+    font-size: 2.5em; /* Taille du titre principal */
+}
+
+h2 {
+    font-size: 2em; /* Taille du deuxième niveau de titre */
+}
+
+h3 {
+    font-size: 1.5em; /* Taille du troisième niveau de titre */
+}
+
+h4 {
+    font-size: 1.2em; /* Taille du quatrième niveau de titre */
+}
+
 h1, h2, h3, h4 {
     color: #000000; /* Couleur des en-têtes en thème normal */
+    margin-bottom: 20px; /* Ajout d'espace en bas des titres */
+    font-family: 'Arial', sans-serif; /* Utilisation d'une police sans-serif */
+    text-transform: uppercase; /* Transformation du texte en majuscules */
+    letter-spacing: 1px; /* Espacement entre les lettres pour une meilleure lisibilité */
 }
 
 body.dark-theme h1, body.dark-theme h2, body.dark-theme h3, body.dark-theme h4 {
     color: #E0E0E0; /* Couleur des en-têtes en thème sombre */
+    margin-bottom: 20px; /* Ajout d'espace en bas des titres */
+}
+
+/* Sections de rapport */
+.section {
+    border: 1px solid #CCCCCC; /* Bordure grise pour les sections */
+    border-radius: 8px; /* Coins arrondis */
+    padding: 15px; /* Espacement interne */
+    margin-bottom: 20px; /* Espacement externe */
+    background-color: #F9F9F9; /* Fond léger pour les sections */
+}
+
+body.dark-theme .section {
+    border: 1px solid #555555; /* Bordure grise sombre pour le thème sombre */
+    background-color: #3A3A3A; /* Fond gris foncé pour les sections en thème sombre */
 }
 
 /* Tableaux */
 .table {
     background-color: #FFFFFF; /* Fond des tableaux en thème normal */
     color: #000000; /* Couleur du texte des tableaux en thème normal */
+    margin-bottom: 20px; /* Espace entre le tableau et les autres éléments */
+    border-spacing: 10px; /* Espacement entre les cellules du tableau */
 }
 
 body.dark-theme .table {
-    background-color: #1E1E1E; /* Fond des tableaux en thème sombre */
+    background-color: #3A3A3A; /* Fond gris foncé des tableaux en thème sombre */
     color: #E0E0E0; /* Couleur du texte des tableaux en thème sombre */
+    margin-bottom: 20px; /* Espace entre le tableau et les autres éléments */
+    border-spacing: 10px; /* Espacement entre les cellules du tableau */
 }
 
 .table th {
     background-color: #F0F0F0; /* Fond des en-têtes des tableaux en thème normal */
     color: #000000; /* Couleur du texte des en-têtes des tableaux en thème normal */
+    padding: 10px; /* Espacement interne dans les cellules d'en-tête */
 }
 
 body.dark-theme .table th {
-    background-color: #2A2A2A; /* Fond des en-têtes des tableaux en thème sombre */
+    background-color: #4F4F4F; /* Fond des en-têtes des tableaux en thème sombre */
     color: #E0E0E0; /* Couleur du texte des en-têtes des tableaux en thème sombre */
+    padding: 10px; /* Espacement interne dans les cellules d'en-tête */
+}
+
+.table td {
+    padding: 10px; /* Espacement interne dans les cellules des tableaux */
 }
 
 /* Graphiques */
 .shiny-plot-output {
     background-color: #FFFFFF; /* Fond des graphiques en thème normal */
+    margin-bottom: 20px; /* Ajout d'espace en dessous des graphiques */
+    padding: 10px; /* Espacement interne des graphiques */
+}
+
+/* Disposition des graphiques en ligne */
+.graph-container {
+    display: flex; /* Utilisation de flexbox pour aligner les graphiques */
+    flex-wrap: wrap; /* Permet d'enrouler si nécessaire */
+    justify-content: space-between; /* Espacement égal entre les graphiques */
+}
+
+.graph-container .shiny-plot-output {
+    flex: 1; /* Chaque graphique prend un espace égal */
+    min-width: 300px; /* Largeur minimale pour chaque graphique */
+    margin-right: 10px; /* Espace à droite des graphiques */
 }
 
 body.dark-theme .shiny-plot-output {
-    background-color: #1E1E1E; /* Fond des graphiques en thème sombre */
+    background-color: #2C2C2C; /* Fond gris foncé des graphiques en thème sombre */
+    margin-bottom: 20px; /* Ajout d'espace en dessous des graphiques */
+    padding: 10px; /* Espacement interne des graphiques */
 }
 
 /* Inputs */
@@ -76,18 +147,48 @@ input, select, textarea {
     background-color: #FFFFFF; /* Fond des champs de saisie en thème normal */
     color: #000000; /* Couleur du texte des champs de saisie en thème normal */
     border: 1px solid #CCCCCC; /* Bordure des champs de saisie en thème normal */
+    padding: 12px 20px; /* Espacement interne */
+    margin-bottom: 15px; /* Espacement externe */
+    width: 100%; /* Champs en pleine largeur */
+    border-radius: 5px; /* Légers arrondis pour moderniser les champs */
+    font-size: 14px; /* Augmentation de la taille du texte */
 }
 
 body.dark-theme input, body.dark-theme select, body.dark-theme textarea {
-    background-color: #1E1E1E; /* Fond des champs de saisie en thème sombre */
-    color: #E0E0E0; /* Couleur du texte des champs de saisie en thème sombre */
-    border: 1px solid #3A3A3A; /* Bordure des champs de saisie en thème sombre */
+    background-color: #3A3A3A; /* Fond des champs de saisie en thème sombre */
+    color: #E0E0E0; /* Couleur du texte en thème sombre */
+    border: 1px solid #5A5A5A; /* Bordure plus sombre */
+    padding: 12px 20px; /* Espacement interne */
+    margin-bottom: 15px; /* Espacement externe */
+    width: 100%; /* Champs en pleine largeur */
+    border-radius: 5px; /* Légers arrondis */
+    font-size: 14px; /* Augmentation de la taille du texte */
 }
 
 input::placeholder {
-    color: #B0B0B0; /* Couleur du texte des placeholders en thème normal */
+    color: #B0B0B0; /* Placeholder gris clair en thème normal */
 }
 
 body.dark-theme input::placeholder {
-    color: #B0B0B0; /* Couleur du texte des placeholders en thème sombre */
+    color: #B0B0B0; /* Placeholder gris clair en thème sombre */
+}
+
+/* Général */
+.container {
+    padding: 20px; /* Espacement général autour des sections */
+}
+
+.row {
+    margin-bottom: 20px; /* Espace entre les rangées */
+}
+
+/* Cartes interactives (leaflet) */
+.leaflet-container {
+    background-color: #FFFFFF; /* Fond des cartes en thème normal */
+    border-radius: 10px; /* Ajout d'arrondis aux bords des cartes */
+}
+
+body.dark-theme .leaflet-container {
+    background-color: #2C2C2C; /* Fond des cartes en thème sombre */
+    border-radius: 10px; /* Arrondis dans le thème sombre également */
 }

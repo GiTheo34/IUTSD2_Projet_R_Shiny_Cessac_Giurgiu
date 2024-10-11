@@ -41,16 +41,137 @@ server <- function(input, output, session) {
     }
   })
   
+  # Mise à jour des données DPE
+  observeEvent(input$update_data_btn, {
+    output$update_status <- renderText({"Mise à jour des données en cours..."})
+    
+    # Nombre d'observations avant la mise à jour
+    old_n <- nrow(data_dpe)
+    
+    # Récupérer les dernières données via l'API et les ajouter à data_dpe
+    new_data <- reactive({
+      df <- data.frame()
+      cp_herault <- unique(herault$code_postal)
+      
+      for (i in cp_herault) {
+        base_url <- "https://data.ademe.fr/data-fair/api/v1/datasets/dpe-v2-logements-existants/lines"
+        params <- list(
+          page = 1,
+          size = 10000,
+          select = "Identifiant__BAN,Code_postal_(BAN),N°DPE,Etiquette_DPE,Date_réception_DPE,Année_construction,Surface_habitable_logement,Type_bâtiment",
+          q = i,
+          q_fields = "Code_postal_(BAN)"
+        )
+        
+        url_encoded <- modify_url(base_url, query = params)
+        response <- GET(url_encoded)
+        content <- fromJSON(rawToChar(response$content), flatten = FALSE)
+        
+        df <- rbind(df, content$result)
+      }
+      
+      df$id <- df$Identifiant__BAN
+      
+      # Merge avec les données de localisation de l'Hérault
+      df <- merge(df, herault[, c("id", "lon", "lat", "numero", "rep", "nom_voie", "nom_commune")], by = "id", all.x = TRUE)
+      
+      return(df)
+    })
+    
+    # Ajouter les nouvelles données dans data_dpe et éviter les doublons
+    observe({
+      new_df <- new_data()
+      before_update_n <- nrow(data_dpe)  # Nombre d'observations avant l'ajout
+      data_dpe <<- rbind(data_dpe, new_df[!new_df$id %in% data_dpe$id, ])
+      after_update_n <- nrow(data_dpe)   # Nombre d'observations après l'ajout
+      
+      # Calcul du nombre d'observations ajoutées
+      new_observations <- after_update_n - before_update_n
+      
+      output$update_status <- renderText({
+        paste("Mise à jour terminée !", new_observations, "nouvelles observations ont été ajoutées.")
+      })
+      
+      # Afficher une notification à l'utilisateur
+      showNotification(paste("Données mises à jour avec succès :", new_observations, "nouvelles observations ajoutées."), type = "message")
+    })
+  })
+    
+    # Fonction pour générer le rapport PDF
+    output$download_report <- downloadHandler(
+      filename = function() {
+        paste("rapport_ville_", input$ville, ".pdf", sep = "")
+      },
+      content = function(file) {
+        
+        # Filtrer les données de la ville sélectionnée
+        ville_data <- data_dpe %>%
+          filter(nom_commune == input$ville)
+        
+        # Calculer les valeurs nécessaires pour le rapport
+        nombre_dpe <- nrow(ville_data)
+        moyenne_dpe <- round(mean(as.numeric(factor(ville_data$Etiquette_DPE, 
+                                                    levels = c("A", "B", "C", "D", "E", "F", "G")))), 2)
+        
+        surface_moyenne <- round(mean(ville_data$Surface_habitable_logement, na.rm = TRUE), 2)
+        surface_min <- round(min(ville_data$Surface_habitable_logement, na.rm = TRUE), 2)
+        surface_max <- round(max(ville_data$Surface_habitable_logement, na.rm = TRUE), 2)
+        
+        # Graphique de répartition des DPE
+        repartition_dpe_plot <- ggplot(ville_data, aes(x = Etiquette_DPE)) +
+          geom_bar(fill = "steelblue") +
+          labs(title = paste("Répartition des étiquettes DPE pour", input$ville),
+               x = "Étiquette DPE", y = "Nombre de logements") +
+          theme_minimal()
+        
+        # Graphique de répartition des types de bâtiment
+        type_batiment_plot <- ggplot(ville_data, aes(x = Type_bâtiment)) +
+          geom_bar(fill = "lightgreen") +
+          labs(title = paste("Répartition des types de bâtiments pour", input$ville),
+               x = "Type de bâtiment", y = "Nombre de logements") +
+          theme_minimal()
+        
+        # Répartition logements Neufs / Anciens
+        neuf_ancien_plot <- ggplot(ville_data, aes(x = Ancien_Neuf)) +
+          geom_bar(fill = "purple") +
+          labs(title = paste("Répartition des logements Neufs/Anciens pour", input$ville),
+               x = "Ancien / Neuf", y = "Nombre de logements") +
+          theme_minimal()
+        
+        # Utiliser R Markdown pour rendre le PDF
+        tempReport <- file.path(tempdir(), "rapport_ville.Rmd")
+        file.copy("rapport_ville.Rmd", tempReport, overwrite = TRUE)
+        
+        # Paramètres à passer à R Markdown
+        params <- list(
+          ville = input$ville,
+          data = ville_data,
+          moyenne_dpe = moyenne_dpe,
+          surface_min = surface_min,
+          surface_max = surface_max,
+          surface_moyenne = surface_moyenne,
+          repartition_dpe = repartition_dpe_plot,
+          type_batiment = type_batiment_plot,
+          neuf_ancien = neuf_ancien_plot
+        )
+        
+        rmarkdown::render(tempReport, output_file = file,
+                          params = params,
+                          envir = new.env(parent = globalenv())
+        )
+      }
+    )
+  
   # Fonction pour générer une icône en fonction de l'étiquette DPE
   generate_icon <- function(etiquette) {
     icons <- list(
-      A = "www/img/DPE A.png",
-      B = "www/img/DPE B.png",
-      C = "www/img/DPE C.png",
-      D = "www/img/DPE D.png",
-      E = "www/img/DPE E.png",
-      F = "www/img/DPE F.png",
-      G = "www/img/DPE G.png"
+      A = "img/DPE A.png",
+      B = "img/DPE B.png",
+      C = "img/DPE C.png",
+      D = "img/DPE D.png",
+      E = "img/DPE E.png",
+      F = "img/DPE F.png",
+      G = "img/DPE G.png"
     )
     
     return(icons[etiquette])
@@ -74,10 +195,13 @@ server <- function(input, output, session) {
             lng = ~lon,
             lat = ~lat,
             popup = ~paste(
+              "Adresse: ",numero, nom_voie, "<br>",
               "Code Postal:", `Code_postal_(BAN)`, "<br>",
               "Ville:", nom_commune, "<br>",
-              "Etiquette DPE:", Etiquette_DPE, "<br>",
-              "<img src='", makeIcon(iconUrl = generate_icon(Etiquette_DPE)), "' width='50' height='50'>"
+              "Surface: ", Surface_habitable_logement, "m² <br>",
+              "Type d'habitation: ", Type_bâtiment, "<br>",
+              "Ancienneté: ", Ancien_Neuf, "<br>",
+              "Etiquette DPE:", "<img src='", generate_icon(Etiquette_DPE), "'>", "<br>"
             )
           )
       })
@@ -141,17 +265,18 @@ server <- function(input, output, session) {
       "<h4>Informations principales pour la ville de ", input$ville, "</h4>",
       "<ul>",
       "<li><strong>Nombre total de DPE enregistrés :</strong> ", nombre_dpe, "</li>",
-      "<li><strong>Moyenne de l'étiquette DPE :</strong> ", moyenne_dpe, "</li>",
-      "<li><strong>Coordonnées moyennes :</strong> ", coordonnees, "</li>",
       "<li><strong>Surface habitable moyenne :</strong> ", surface_moyenne, " m²</li>",
       "<li><strong>Surface habitable minimum :</strong> ", surface_min, " m²</li>",
       "<li><strong>Surface habitable maximum :</strong> ", surface_max, " m²</li>",
       "<li><strong>Nombre de logements neufs :</strong> ", nb_neuf, "</li>",
       "<li><strong>Nombre de logements anciens :</strong> ", nb_ancien, "</li>",
       "</ul>",
+      "</div>",
+      "<br>","<br>","<br>","<br>","<br>","<br>","<br>",
       "<h4>Répartition des DPE par décennie de construction</h4>",
       repartition_table_html,
-      "</div>"
+      "<br>",
+      "<h4>Graphiques analytiques de ", input$ville,"</h4>"
     )
     
     output$rapport_ville <- renderUI({
@@ -160,7 +285,6 @@ server <- function(input, output, session) {
         plotOutput("graphique_type_batiment"),
         plotOutput("graphique_dpe_neuf"),   
         plotOutput("graphique_dpe_ancien"),
-        downloadButton("telecharger_graphique_dpe", label = "Télécharger le graphique de répartition des DPE")  # Un seul bouton de téléchargement pour le graphique
       )
     })
     
@@ -173,7 +297,13 @@ server <- function(input, output, session) {
         geom_bar(fill = "steelblue") +
         labs(title = paste("Répartition des étiquettes DPE pour", input$ville),
              x = "Étiquette DPE", y = "Nombre de logements") +
-        theme_minimal()
+        theme_minimal() +
+        theme(
+          panel.background = element_rect(fill = "transparent", color = NA), # Fond du panneau transparent
+          plot.background = element_rect(fill = "transparent", color = NA),  # Fond du graphique transparent
+          legend.background = element_rect(fill = "transparent", color = NA), # Fond de la légende transparent
+          panel.grid = element_blank()
+        )
     })
     
     output$graphique_type_batiment <- renderPlot({
@@ -189,10 +319,16 @@ server <- function(input, output, session) {
         filter(Ancien_Neuf == "Neuf")
       
       ggplot(data_neuf, aes(x = Etiquette_DPE)) +
-        geom_bar(fill = "green") +
+        geom_bar(fill = "chocolate") +
         labs(title = paste("Répartition des étiquettes DPE pour les logements neufs à", input$ville),
              x = "Étiquette DPE", y = "Nombre de logements") +
-        theme_minimal()
+        theme_minimal() +
+        theme(
+          panel.background = element_rect(fill = "transparent", color = NA), # Fond du panneau transparent
+          plot.background = element_rect(fill = "transparent", color = NA),  # Fond du graphique transparent
+          legend.background = element_rect(fill = "transparent", color = NA), # Fond de la légende transparent
+          panel.grid = element_blank()
+        )
     })
     
     output$graphique_dpe_ancien <- renderPlot({
@@ -200,10 +336,16 @@ server <- function(input, output, session) {
         filter(Ancien_Neuf == "Ancien")
       
       ggplot(data_ancien, aes(x = Etiquette_DPE)) +
-        geom_bar(fill = "blue") +
+        geom_bar(fill = "lavenderblush3") +
         labs(title = paste("Répartition des étiquettes DPE pour les logements anciens à", input$ville),
              x = "Étiquette DPE", y = "Nombre de logements") +
-        theme_minimal()
+        theme_minimal() +
+        theme(
+          panel.background = element_rect(fill = "transparent", color = NA), # Fond du panneau transparent
+          plot.background = element_rect(fill = "transparent", color = NA),  # Fond du graphique transparent
+          legend.background = element_rect(fill = "transparent", color = NA), # Fond de la légende transparent
+          panel.grid = element_blank()
+        )
     })
     
     output$image_ville <- renderImage({
