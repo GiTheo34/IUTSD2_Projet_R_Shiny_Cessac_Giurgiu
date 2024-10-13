@@ -115,7 +115,7 @@ server <- function(input, output, session) {
       showNotification(paste("Données mises à jour avec succès :", new_observations, "nouvelles observations ajoutées."), type = "message")
     })
   })
-    
+  
   output$download_report <- downloadHandler(
     filename = function() {
       paste("rapport_", input$ville, "_", Sys.Date(), ".docx", sep = "")
