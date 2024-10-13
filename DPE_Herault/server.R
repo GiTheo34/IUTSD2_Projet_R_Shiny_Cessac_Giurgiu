@@ -9,6 +9,25 @@
 
 server <- function(input, output, session) {
   
+  credentials <- data.frame(
+    user = c("shiny", "shinymanager"), # noms d'utilisateur
+    password = c("azerty", "12345"),   # mots de passe
+    start = c("2019-04-15"),           # date de début d'accès (optionnel)
+    expire = c(NA, "2050-12-31"),      # date d'expiration (optionnel)
+    admin = c(FALSE, TRUE),            # statut d'administrateur
+    comment = "Simple and secure authentication mechanism for single Shiny applications.",
+    stringsAsFactors = FALSE
+  )
+  
+  # Configuration de l'authentification
+  res_auth <- secure_server(
+    check_credentials = check_credentials(credentials)
+  )
+  
+  # Affichage des informations de l'utilisateur authentifié
+  output$auth_output <- renderPrint({
+    reactiveValuesToList(res_auth)
+  })
   # Variable pour contrôler l'état de connexion
   user_authenticated <- reactiveVal(FALSE)
   
@@ -481,6 +500,9 @@ server <- function(input, output, session) {
       setView(lng = 3.8772, lat = 43.6119, zoom = 9) # Vue centrée sur l'Hérault
   })
 }
+
+
+
 
 
 

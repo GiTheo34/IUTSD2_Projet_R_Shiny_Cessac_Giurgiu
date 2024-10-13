@@ -11,6 +11,7 @@ install.packages("tidyr")
 install.packages("knitr")
 install.packages("tinytex")
 install.packages("rmarkdown")
+install.packages("shinymanager")
 library(shiny)
 library(httr)
 library(jsonlite)
@@ -26,12 +27,14 @@ library(tidyr)
 library(knitr)
 library(tinytex)
 library(rmarkdown)
+library(shinymanager)
+
 
 # Remplacez ceci par vos identifiants de connexion réels
 username <- "admin"
 password <- "admin"
 
-herault = read.csv(file = "C:/Users/Théo/OneDrive/Bureau/BUT/2ème année/R shiny/Projet-R-Herault/adresses-34.csv", header = TRUE, sep = ";")
+herault = read.csv(file = "C:/Users/adria/Documents/Projet-R-Herault/adresses-34.csv", header = TRUE, sep = ";")
 cp_herault = unique(herault$code_postal)
 df= data.frame()
 
@@ -75,3 +78,4 @@ data_dpe <- data_dpe %>%
   )
 
 write.table(df, file = "DPE_Herault.csv", col.names = TRUE, row.names = FALSE, sep = ";", dec = ".")
+
