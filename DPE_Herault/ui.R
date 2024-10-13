@@ -81,6 +81,7 @@ app_ui <- fluidPage(
              ),
              h4("Répartition des étiquettes DPE"),
              plotOutput("graphique_dpe"),               # Graphique des étiquettes DPE
+             downloadButton("telecharger_graphique_dpe", label = "Télécharger le graphique des DPE"),
              h4("Classement de la ville"),
              htmlOutput("classement_ville"),             # Classement par étiquette A
              downloadButton("download_report", "Télécharger le rapport PDF"),

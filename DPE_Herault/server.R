@@ -97,70 +97,55 @@ server <- function(input, output, session) {
     })
   })
     
-    # Fonction pour générer le rapport PDF
-    output$download_report <- downloadHandler(
-      filename = function() {
-        paste("rapport_ville_", input$ville, ".pdf", sep = "")
-      },
-      content = function(file) {
-        
-        # Filtrer les données de la ville sélectionnée
-        ville_data <- data_dpe %>%
-          filter(nom_commune == input$ville)
-        
-        # Calculer les valeurs nécessaires pour le rapport
-        nombre_dpe <- nrow(ville_data)
-        moyenne_dpe <- round(mean(as.numeric(factor(ville_data$Etiquette_DPE, 
-                                                    levels = c("A", "B", "C", "D", "E", "F", "G")))), 2)
-        
-        surface_moyenne <- round(mean(ville_data$Surface_habitable_logement, na.rm = TRUE), 2)
-        surface_min <- round(min(ville_data$Surface_habitable_logement, na.rm = TRUE), 2)
-        surface_max <- round(max(ville_data$Surface_habitable_logement, na.rm = TRUE), 2)
-        
-        # Graphique de répartition des DPE
-        repartition_dpe_plot <- ggplot(ville_data, aes(x = Etiquette_DPE)) +
-          geom_bar(fill = "steelblue") +
-          labs(title = paste("Répartition des étiquettes DPE pour", input$ville),
-               x = "Étiquette DPE", y = "Nombre de logements") +
-          theme_minimal()
-        
-        # Graphique de répartition des types de bâtiment
-        type_batiment_plot <- ggplot(ville_data, aes(x = Type_bâtiment)) +
-          geom_bar(fill = "lightgreen") +
-          labs(title = paste("Répartition des types de bâtiments pour", input$ville),
-               x = "Type de bâtiment", y = "Nombre de logements") +
-          theme_minimal()
-        
-        # Répartition logements Neufs / Anciens
-        neuf_ancien_plot <- ggplot(ville_data, aes(x = Ancien_Neuf)) +
-          geom_bar(fill = "purple") +
-          labs(title = paste("Répartition des logements Neufs/Anciens pour", input$ville),
-               x = "Ancien / Neuf", y = "Nombre de logements") +
-          theme_minimal()
-        
-        # Utiliser R Markdown pour rendre le PDF
-        tempReport <- file.path(tempdir(), "rapport_ville.Rmd")
-        file.copy("rapport_ville.Rmd", tempReport, overwrite = TRUE)
-        
-        # Paramètres à passer à R Markdown
-        params <- list(
-          ville = input$ville,
-          data = ville_data,
-          moyenne_dpe = moyenne_dpe,
-          surface_min = surface_min,
-          surface_max = surface_max,
-          surface_moyenne = surface_moyenne,
-          repartition_dpe = repartition_dpe_plot,
-          type_batiment = type_batiment_plot,
-          neuf_ancien = neuf_ancien_plot
-        )
-        
-        rmarkdown::render(tempReport, output_file = file,
-                          params = params,
-                          envir = new.env(parent = globalenv())
-        )
-      }
-    )
+  output$download_report <- downloadHandler(
+    filename = function() {
+      paste("rapport_", input$ville, "_", Sys.Date(), ".docx", sep = "")
+    },
+    content = function(file) {
+      # Sélection des données spécifiques à la ville choisie
+      ville_selected <- input$ville
+      data_ville <- data_dpe[data_dpe$nom_commune == ville_selected, ]
+      
+      # Calculs pour le rapport
+      nombre_dpe <- nrow(data_ville)
+      nombre_neuf <- sum(data_ville$Ancien_Neuf == "Neuf", na.rm = TRUE)
+      nombre_ancien <- sum(data_ville$Ancien_Neuf == "Ancien", na.rm = TRUE)
+      surface_moyenne <- mean(data_ville$Surface_habitable_logement, na.rm = TRUE)
+      surface_min <- min(data_ville$Surface_habitable_logement, na.rm = TRUE)
+      surface_max <- max(data_ville$Surface_habitable_logement, na.rm = TRUE)
+      
+      # Génération des graphiques pour le rapport
+      plot_repartition_dpe <- ggplot(data_ville, aes(x = Etiquette_DPE)) +
+        geom_bar() +
+        labs(title = paste("Répartition des étiquettes DPE -", ville_selected))
+      
+      plot_corr_neuf <- ggplot(data_ville[data_ville$Ancien_Neuf == "Neuf", ], aes(x = Etiquette_DPE)) +
+        geom_bar() +
+        labs(title = "Répartition DPE des logements neufs")
+      
+      plot_corr_ancien <- ggplot(data_ville[data_ville$Ancien_Neuf == "Ancien", ], aes(x = Etiquette_DPE)) +
+        geom_bar() +
+        labs(title = "Répartition DPE des logements anciens")
+      
+      # Rendu du rapport avec les paramètres
+      rmarkdown::render("Bon Markdown.Rmd", 
+                        output_file = file,
+                        params = list(
+                          ville = ville_selected,
+                          nombre_neuf = nombre_neuf,
+                          nombre_ancien = nombre_ancien,
+                          surface_moyenne = surface_moyenne,
+                          surface_min = surface_min,
+                          surface_max = surface_max,
+                          plot_repartition_dpe = plot_repartition_dpe,
+                          plot_corr_neuf = plot_corr_neuf,
+                          plot_corr_ancien = plot_corr_ancien
+                        ),
+                        envir = new.env(parent = globalenv())
+      )
+    }
+  )
+  
   
   # Fonction pour générer une icône en fonction de l'étiquette DPE
   generate_icon <- function(etiquette) {

@@ -9,6 +9,8 @@ install.packages("opencage")
 install.packages("kableExtra")
 install.packages("tidyr")
 install.packages("knitr")
+install.packages("tinytex")
+install.packages("rmarkdown")
 library(shiny)
 library(httr)
 library(jsonlite)
@@ -22,6 +24,8 @@ library(opencage)
 library(kableExtra)
 library(tidyr)
 library(knitr)
+library(tinytex)
+library(rmarkdown)
 
 # Remplacez ceci par vos identifiants de connexion réels
 username <- "admin"
